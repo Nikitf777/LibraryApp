@@ -14,7 +14,7 @@ public interface IBasicRepository<TModel>
 	public void Delete(int id);
 }
 
-public class BasicRepository<TModel> : IBasicRepository<TModel> where TModel : IId
+public class BasicRepository<TModel> : IBasicRepository<TModel> where TModel : IKeyedEntity
 {
 	private readonly List<TModel> data = [];
 	private int nextId;

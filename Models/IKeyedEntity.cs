@@ -1,6 +1,6 @@
 namespace LibraryApp.Models;
 
-public interface IId
+public interface IKeyedEntity
 {
 	public int Id { get; set; }
 }

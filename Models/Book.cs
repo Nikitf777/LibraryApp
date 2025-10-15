@@ -1,6 +1,6 @@
 namespace LibraryApp.Models;
 
-public class Book(string title, int publishedYear, int authorId) : IId
+public class Book(string title, int publishedYear, int authorId) : IKeyedEntity
 {
 	public int Id { get; set; }
 	public string Title { get; } = title;
