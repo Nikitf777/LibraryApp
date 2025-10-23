@@ -1,60 +1,84 @@
-using LibraryApp.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using LibraryApp.DbContext;
 using LibraryApp.Models;
-using LibraryApp.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController(IBasicRepository<Author> authorsRepo, IBasicRepository<Book> booksRepo) : ControllerBase
+public class BooksController() : ControllerBase
 {
-	private readonly IBasicRepository<Author> authorsRepo = authorsRepo;
-	private readonly IBasicRepository<Book> booksRepo = booksRepo;
-
 	[HttpGet]
-	public IEnumerable<Book> GetAll()
+	public async Task<IEnumerable<BookListDto>> GetAll(int fromYear = int.MinValue, int toYear = int.MaxValue)
 	{
-		return this.booksRepo.GetAll();
+		var context = new LibraryContext();
+		return await (
+			from book in context.Books
+			where book.PublishedYear >= fromYear && book.PublishedYear <= toYear
+			join author in context.Authors
+				on book.Author.Id equals author.Id
+			select new BookListDto {
+				Id = book.Id,
+				Title = book.Title,
+				PublishedYear = book.PublishedYear,
+				Author = author.Name
+			}).ToListAsync();
 	}
 
 	[HttpGet("{id}")]
-	public Book Get(int id)
+	public Book? Get(int id)
 	{
-		return this.booksRepo.Get(id);
+		using var context = new LibraryContext();
+		return context.Books.Find(id);
 	}
 
 	[HttpPost]
-	public string Post(string title, int publishedYear, int authorId)
+	public string? Post(string title, int publishedYear, int authorId)
 	{
-		try {
-			_ = this.authorsRepo.Get(authorId);
-			var id = this.booksRepo.Create(new Book(title, publishedYear, authorId));
-			return $"Added a new book with id {id}\n";
-		} catch (NotFoundException e) {
-			return e.Message;
+		using var context = new LibraryContext();
+		var authorEntiry = context.Authors.Find(authorId);
+		if (authorEntiry is null) {
+			return null;
 		}
+		_ = context.Books.Add(new Book {
+			Title = title,
+			PublishedYear = publishedYear,
+			Author = authorEntiry
+		});
+		_ = context.SaveChanges();
+		return "Added a new book\n";
 	}
 
 	[HttpPut]
-	public string Put(string title, int publishedYear, int authorId)
+	public string? Put(int id, string title, int publishedYear, int authorId)
 	{
-		try {
-			this.booksRepo.Update(new Book(title, publishedYear, authorId));
-			return "Updated the book\n";
-		} catch (NotFoundException e) {
-			return e.Message;
+		using var context = new LibraryContext();
+		var bookEntity = context.Books.Find(id);
+		if (bookEntity is null) {
+			return null;
 		}
+
+		var authorEntiry = context.Authors.Find(authorId);
+		if (authorEntiry is null) {
+			return null;
+		}
+
+		bookEntity.Title = title;
+		bookEntity.PublishedYear = publishedYear;
+		bookEntity.Author = authorEntiry;
+
+		_ = context.Books.Update(bookEntity);
+		_ = context.SaveChanges();
+		return "Updated the author\n";
 	}
 
 	[HttpDelete("{id}")]
 	public string Delete(int id)
 	{
-		try {
-			this.booksRepo.Delete(id);
-			return "Deleted the book\n";
-		} catch (NotFoundException e) {
-			return e.Message;
-		}
+		using var context = new LibraryContext();
+		_ = context.Books.Remove(new Book { Id = id });
+		_ = context.SaveChanges();
+		return "Deleted the book\n";
 	}
 }

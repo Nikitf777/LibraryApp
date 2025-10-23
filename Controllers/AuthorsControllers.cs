@@ -1,50 +1,70 @@
-using LibraryApp.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using LibraryApp.DbContext;
 using LibraryApp.Models;
-using LibraryApp.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthorsController(IBasicRepository<Author> repository) : ControllerBase
+public class AuthorsController() : ControllerBase
 {
-	private readonly IBasicRepository<Author> repository = repository;
-
 	[HttpGet]
-	public IEnumerable<Author> GetAll()
+	public async Task<IEnumerable<AuthorDto>> GetAll(string nameFilter = "")
 	{
-		return this.repository.GetAll();
+		using var context = new LibraryContext();
+		return await (
+			from author in context.Authors
+			where author.Name.Contains(nameFilter)
+			join book in context.Books on author.Id equals book.AuthorId into books
+			select new AuthorDto {
+				Id = author.Id,
+				Name = author.Name,
+				DateOfBirth = author.DateOfBirth,
+				BookCount = books.Count(),
+			}).ToListAsync();
 	}
 
 	[HttpGet("{id}")]
-	public Author Get(int id)
+	public async Task<Author?> Get(int id)
 	{
-		return this.repository.Get(id);
+		using var context = new LibraryContext();
+		return await context.Authors.FindAsync(id);
 	}
 
 	[HttpPost]
-	public string Post(string name, long dateOfBirth)
+	public async Task<string> Post(string name, DateTime dateOfBirth)
 	{
-		var id = this.repository.Create(new Author(name, DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime));
-		return $"Added a new Author with id {id}\n";
+		using var context = new LibraryContext();
+		_ = context.Authors.Add(new Author {
+			Name = name,
+			DateOfBirth = dateOfBirth
+		});
+		_ = await context.SaveChangesAsync();
+		return $"Added a new Author\n";
 	}
 
 	[HttpPut]
-	public ActionResult<string> Put(string name, long dateOfBirth)
+	public async Task<string?> Put(int id, string name, long dateOfBirth)
 	{
-		this.repository.Update(new Author(name, DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime));
+		using var context = new LibraryContext();
+		var authorEntity = await context.Authors.FindAsync(id);
+		if (authorEntity is null) {
+			return null;
+		}
+		authorEntity.Name = name;
+		authorEntity.DateOfBirth = DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime;
+		_ = context.Authors.Update(authorEntity);
+		_ = await context.SaveChangesAsync();
 		return "Updated the author\n";
 	}
 
 	[HttpDelete("{id}")]
-	public string Delete(int id)
+	public async Task<string> DeleteAsync(int id)
 	{
-		try {
-			this.repository.Delete(id);
-			return "Deleted the author\n";
-		} catch (NotFoundException e) {
-			return e.Message;
-		}
+		using var context = new LibraryContext();
+		_ = context.Authors.Remove(new Author { Id = id });
+		_ = await context.SaveChangesAsync();
+		return "Deleted the author\n";
 	}
 }
