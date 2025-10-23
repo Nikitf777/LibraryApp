@@ -1,10 +1,9 @@
-using LibraryApp.Models;
-using LibraryApp.Repositories;
+using LibraryApp.DbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
-builder.Services.AddSingleton<IBasicRepository<Author>, BasicRepository<Author>>();
-builder.Services.AddSingleton<IBasicRepository<Book>, BasicRepository<Book>>();
+builder.Services.AddDbContext<LibraryContext>();
+new LibraryContext().Database.EnsureCreated();
 var app = builder.Build();
 
 app.UseHttpsRedirection();

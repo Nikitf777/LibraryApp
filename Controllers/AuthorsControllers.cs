@@ -1,50 +1,69 @@
-using LibraryApp.Exceptions;
+using LibraryApp.DbContext;
 using LibraryApp.Models;
-using LibraryApp.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthorsController(IBasicRepository<Author> repository) : ControllerBase
+public class AuthorsController() : ControllerBase
 {
-	private readonly IBasicRepository<Author> repository = repository;
-
 	[HttpGet]
-	public IEnumerable<Author> GetAll()
+	public IEnumerable<AuthorDto> GetAll()
 	{
-		return this.repository.GetAll();
+		using var context = new LibraryContext();
+		var authors =
+			from author in context.Authors
+			join book in context.Books on author.Id equals book.AuthorId into books
+			select new AuthorDto {
+				Id = author.Id,
+				Name = author.Name,
+				DateOfBirth = author.DateOfBirth,
+				Books = from book in books select book.Title,
+			};
+		return [.. authors];
 	}
 
 	[HttpGet("{id}")]
-	public Author Get(int id)
+	public Author? Get(int id)
 	{
-		return this.repository.Get(id);
+		using var context = new LibraryContext();
+		return context.Authors.Find(id);
 	}
 
 	[HttpPost]
-	public string Post(string name, long dateOfBirth)
+	public string Post(string name, DateTime dateOfBirth)
 	{
-		var id = this.repository.Create(new Author(name, DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime));
-		return $"Added a new Author with id {id}\n";
+		using var context = new LibraryContext();
+		_ = context.Authors.Add(new Author {
+			Name = name,
+			DateOfBirth = dateOfBirth
+		});
+		_ = context.SaveChanges();
+		return $"Added a new Author\n";
 	}
 
 	[HttpPut]
-	public ActionResult<string> Put(string name, long dateOfBirth)
+	public string? Put(int id, string name, long dateOfBirth)
 	{
-		this.repository.Update(new Author(name, DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime));
+		using var context = new LibraryContext();
+		var authorEntity = context.Authors.Find(id);
+		if (authorEntity is null) {
+			return null;
+		}
+		authorEntity.Name = name;
+		authorEntity.DateOfBirth = DateTimeOffset.FromUnixTimeSeconds(dateOfBirth).DateTime;
+		_ = context.Authors.Update(authorEntity);
+		_ = context.SaveChanges();
 		return "Updated the author\n";
 	}
 
 	[HttpDelete("{id}")]
 	public string Delete(int id)
 	{
-		try {
-			this.repository.Delete(id);
-			return "Deleted the author\n";
-		} catch (NotFoundException e) {
-			return e.Message;
-		}
+		using var context = new LibraryContext();
+		_ = context.Authors.Remove(new Author { Id = id });
+		_ = context.SaveChanges();
+		return "Deleted the author\n";
 	}
 }
