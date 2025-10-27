@@ -1,4 +1,5 @@
 using LibraryApp.DbContext;
+using LibraryApp.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -12,5 +13,6 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseExceptionHandler();
 
 app.Run();

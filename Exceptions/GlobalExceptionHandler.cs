@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace LibraryApp.Exceptions;
 
 public class GlobalExceptionHandler()
 	: IExceptionHandler
@@ -8,14 +11,18 @@ public class GlobalExceptionHandler()
 		HttpContext httpContext,
 		Exception exception,
 		CancellationToken cancellationToken)
-	{
-		var problemDetails = new ProblemDetails {
-			Status = StatusCodes.Status500InternalServerError,
-			Title = "An unexpected error occurred",
-		};
+{
+	httpContext.Response.StatusCode = exception switch {
+		DbUpdateException => StatusCodes.Status400BadRequest,
+		_ => StatusCodes.Status500InternalServerError,
+	};
 
-		httpContext.Response.StatusCode = problemDetails.Status.Value;
-		await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-		return true;
-	}
+	await httpContext.Response.WriteAsJsonAsync(new ProblemDetails {
+		Type = exception.GetType().Name,
+		Title = "An error occured",
+		Detail = exception.Message,
+	}, cancellationToken: cancellationToken);
+
+	return true;
+}
 }
