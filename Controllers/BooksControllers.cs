@@ -1,84 +1,44 @@
-using LibraryApp.DbContext;
 using LibraryApp.Models;
+using LibraryApp.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LibraryApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController() : ControllerBase
+public class BooksController(IBookService bookService) : ControllerBase
 {
+	private readonly IBookService bookService = bookService;
 	[HttpGet]
 	public async Task<IEnumerable<BookListDto>> GetAll(int fromYear = int.MinValue, int toYear = int.MaxValue)
 	{
-		var context = new LibraryContext();
-		return await (
-			from book in context.Books
-			where book.PublishedYear >= fromYear && book.PublishedYear <= toYear
-			join author in context.Authors
-				on book.Author.Id equals author.Id
-			select new BookListDto {
-				Id = book.Id,
-				Title = book.Title,
-				PublishedYear = book.PublishedYear,
-				Author = author.Name
-			}).ToListAsync();
+		return await this.bookService.SearchForBooks(fromYear, toYear);
 	}
 
 	[HttpGet("{id}")]
-	public Book? Get(int id)
+	public async Task<Book?> Get(uint id)
 	{
-		using var context = new LibraryContext();
-		return context.Books.Find(id);
+		return await this.bookService.RetriveSpecificBookDetails(id);
 	}
 
 	[HttpPost]
-	public string? Post(string title, int publishedYear, int authorId)
+	public async Task<string?> Post(string title, int publishedYear, uint authorId)
 	{
-		using var context = new LibraryContext();
-		var authorEntiry = context.Authors.Find(authorId);
-		if (authorEntiry is null) {
-			return null;
-		}
-		_ = context.Books.Add(new Book {
-			Title = title,
-			PublishedYear = publishedYear,
-			Author = authorEntiry
-		});
-		_ = context.SaveChanges();
+		await this.bookService.CreateBook(title, publishedYear, authorId);
 		return "Added a new book\n";
 	}
 
 	[HttpPut]
-	public string? Put(int id, string title, int publishedYear, int authorId)
+	public async Task<string?> Put(uint id, string title, int publishedYear, uint authorId)
 	{
-		using var context = new LibraryContext();
-		var bookEntity = context.Books.Find(id);
-		if (bookEntity is null) {
-			return null;
-		}
-
-		var authorEntiry = context.Authors.Find(authorId);
-		if (authorEntiry is null) {
-			return null;
-		}
-
-		bookEntity.Title = title;
-		bookEntity.PublishedYear = publishedYear;
-		bookEntity.Author = authorEntiry;
-
-		_ = context.Books.Update(bookEntity);
-		_ = context.SaveChanges();
+		await this.bookService.ModifyBook(id, title, publishedYear, authorId);
 		return "Updated the author\n";
 	}
 
 	[HttpDelete("{id}")]
-	public string Delete(int id)
+	public async Task<string> Delete(uint id)
 	{
-		using var context = new LibraryContext();
-		_ = context.Books.Remove(new Book { Id = id });
-		_ = context.SaveChanges();
+		await this.bookService.RemoveBook(id);
 		return "Deleted the book\n";
 	}
 }

@@ -11,18 +11,18 @@ public class GlobalExceptionHandler()
 		HttpContext httpContext,
 		Exception exception,
 		CancellationToken cancellationToken)
-{
-	httpContext.Response.StatusCode = exception switch {
-		DbUpdateException => StatusCodes.Status400BadRequest,
-		_ => StatusCodes.Status500InternalServerError,
-	};
+	{
+		httpContext.Response.StatusCode = exception switch {
+			DbUpdateException => StatusCodes.Status400BadRequest,
+			_ => StatusCodes.Status500InternalServerError,
+		};
 
-	await httpContext.Response.WriteAsJsonAsync(new ProblemDetails {
-		Type = exception.GetType().Name,
-		Title = "An error occured",
-		Detail = exception.Message,
-	}, cancellationToken: cancellationToken);
+		await httpContext.Response.WriteAsJsonAsync(new ProblemDetails {
+			Type = exception.GetType().Name,
+			Title = "An error occured",
+			Detail = exception.Message,
+		}, cancellationToken: cancellationToken);
 
-	return true;
-}
+		return true;
+	}
 }
