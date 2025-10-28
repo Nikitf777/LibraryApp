@@ -30,7 +30,6 @@ internal class RootCliCommand
 
 		var app = builder.Build();
 
-		_ = app.UseHttpsRedirection();
 		_ = app.MapControllers();
 		_ = app.UseExceptionHandler();
 
