@@ -1,25 +1,56 @@
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1852 // A type can be sealed because it has no subtypes in its containing assembly and is not externally visible
+
+using DotMake.CommandLine;
 using LibraryApp.DbContext;
 using LibraryApp.Exceptions;
+using LibraryApp.Models;
 using LibraryApp.Repositories;
 using LibraryApp.Services;
+using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
-builder.Services.AddDbContext<LibraryContext>();
+Cli.Run<RootCliCommand>(args);
 
-builder.Services.AddTransient<IAuthorRepository, AuthorRepository>();
-builder.Services.AddTransient<IBookRepository, BookRepository>();
-builder.Services.AddTransient<IAuthorService, AuthorService>();
-builder.Services.AddTransient<IBookService, BookService>();
+[CliCommand(Description = "A simple library manegement WEB API.")]
+internal class RootCliCommand
+{
+	public const string DatabaseDirectoryName = "Database";
+	public void Run()
+	{
+		var builder = WebApplication.CreateBuilder();
+		_ = builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+		_ = builder.Services.AddProblemDetails();
+		_ = builder.Services.AddControllers();
+		_ = builder.Services.AddDbContext<LibraryContext>();
 
-new LibraryContext().Database.EnsureCreated();
+		_ = builder.Services.AddTransient<IAuthorRepository, AuthorRepository>();
+		_ = builder.Services.AddTransient<IBookRepository, BookRepository>();
+		_ = builder.Services.AddTransient<IAuthorService, AuthorService>();
+		_ = builder.Services.AddTransient<IBookService, BookService>();
 
-var app = builder.Build();
+		_ = new LibraryContext().Database.EnsureCreated();
 
-app.UseHttpsRedirection();
-app.MapControllers();
-app.UseExceptionHandler();
+		var app = builder.Build();
 
-app.Run();
+		_ = app.UseHttpsRedirection();
+		_ = app.MapControllers();
+		_ = app.UseExceptionHandler();
+
+		app.Run();
+	}
+
+	[CliCommand(Description = "Fill the database with initial placeholder values.")]
+	internal class SeedCommand
+	{
+		public void Run()
+		{
+			using var context = new LibraryContext();
+			_ = context.Database.EnsureCreated();
+			ReadOnlySpan<Type> classes = [typeof(Author), typeof(Book)];
+			foreach (var item in classes) {
+				_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
+			}
+			_ = context.SaveChanges();
+		}
+	}
+}

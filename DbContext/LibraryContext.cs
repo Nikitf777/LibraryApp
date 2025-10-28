@@ -10,6 +10,6 @@ public class LibraryContext : Microsoft.EntityFrameworkCore.DbContext
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 	{
-		_ = optionsBuilder.UseSqlite("Data Source=Database/database.sqlite");
+		_ = optionsBuilder.UseSqlite($"Data Source={RootCliCommand.DatabaseDirectoryName}/database.sqlite");
 	}
 }
