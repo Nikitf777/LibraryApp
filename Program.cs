@@ -28,8 +28,6 @@ internal class RootCliCommand
 		_ = builder.Services.AddTransient<IAuthorService, AuthorService>();
 		_ = builder.Services.AddTransient<IBookService, BookService>();
 
-		_ = new LibraryContext().Database.EnsureCreated();
-
 		var app = builder.Build();
 
 		_ = app.UseHttpsRedirection();
@@ -45,7 +43,6 @@ internal class RootCliCommand
 		public void Run()
 		{
 			using var context = new LibraryContext();
-			_ = context.Database.EnsureCreated();
 			ReadOnlySpan<Type> classes = [typeof(Author), typeof(Book)];
 			foreach (var item in classes) {
 				_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
