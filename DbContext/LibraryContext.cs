@@ -8,9 +8,12 @@ public class LibraryContext : Microsoft.EntityFrameworkCore.DbContext
 	public DbSet<Author> Authors { get; set; } = null!;
 	public DbSet<Book> Books { get; set; } = null!;
 
-	public LibraryContext() : this(new DbContextOptions<LibraryContext>()) { }
-	public LibraryContext(DbContextOptions<LibraryContext> options) : base(options)
+	public LibraryContext(bool delete = false) : this(new DbContextOptions<LibraryContext>(), delete) { }
+	public LibraryContext(DbContextOptions<LibraryContext> options, bool delete = false) : base(options)
 	{
+		if (delete) {
+			_ = this.Database.EnsureDeleted();
+		}
 		_ = this.Database.EnsureCreated();
 	}
 

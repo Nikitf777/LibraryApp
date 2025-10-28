@@ -40,9 +40,12 @@ internal class RootCliCommand
 	[CliCommand(Description = "Fill the database with initial placeholder values.")]
 	internal class SeedCommand
 	{
+		[CliOption(Description = "Delete database if it already exists.")]
+		public bool Clean { get; set; }
+
 		public void Run()
 		{
-			using var context = new LibraryContext();
+			using var context = new LibraryContext(this.Clean);
 			ReadOnlySpan<Type> classes = [typeof(Author), typeof(Book)];
 			foreach (var item in classes) {
 				_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
