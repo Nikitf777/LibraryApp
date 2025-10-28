@@ -33,7 +33,7 @@ public class BookRepository(LibraryContext context) : IBookRepository
 			select new BookDetailsDto(book) {
 				Author = new AuthorDto(author)
 			}
-		).FirstAsync();
+		).FirstOrDefaultAsync() ?? throw new NotFoundException($"Could not fetch a non-existing book with id {id}");
 	}
 
 	public async Task InsertBook(string title, int publishedYear, uint authorId)
