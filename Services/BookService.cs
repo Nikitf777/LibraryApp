@@ -12,7 +12,7 @@ public class BookService(IBookRepository bookRepository) : IBookService
 		return await this.bookRepository.FetchBooks(fromYear, toYear);
 	}
 
-	public async Task<Book> RetriveSpecificBookDetails(uint id)
+	public async Task<BookDetailsDto> RetriveSpecificBookDetails(uint id)
 	{
 		return await this.bookRepository.FetchSpecificBook(id);
 	}

@@ -16,7 +16,7 @@ public class BooksController(IBookService bookService) : ControllerBase
 	}
 
 	[HttpGet("{id}")]
-	public async Task<Book?> Get(uint id)
+	public async Task<BookDetailsDto?> Get(uint id)
 	{
 		return await this.bookService.RetriveSpecificBookDetails(id);
 	}

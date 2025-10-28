@@ -23,9 +23,17 @@ public class BookRepository(LibraryContext context) : IBookRepository
 			}).ToListAsync();
 	}
 
-	public async Task<Book> FetchSpecificBook(uint id)
+	public async Task<BookDetailsDto> FetchSpecificBook(uint id)
 	{
-		return await this.context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not fetch a non-existing book with id {id}");
+		return await (
+			from book in this.context.Books
+			where book.Id == id
+			join author in this.context.Authors
+				on book.Author.Id equals author.Id
+			select new BookDetailsDto(book) {
+				Author = new AuthorDto(author)
+			}
+		).FirstAsync();
 	}
 
 	public async Task InsertBook(string title, int publishedYear, uint authorId)
