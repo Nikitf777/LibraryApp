@@ -21,6 +21,7 @@ internal class RootCliCommand
 		_ = builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 		_ = builder.Services.AddProblemDetails();
 		_ = builder.Services.AddControllers();
+
 		_ = builder.Services.AddDbContext<LibraryContext>();
 
 		_ = builder.Services.AddTransient<IAuthorRepository, AuthorRepository>();
