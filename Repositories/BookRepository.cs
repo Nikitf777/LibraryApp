@@ -38,34 +38,41 @@ public class BookRepository(LibraryContext context) : IBookRepository
 
 	public async Task InsertBook(string title, int publishedYear, uint authorId)
 	{
-		var authorEntiry = await this.context.Authors.FindAsync(authorId) ?? throw new NotFoundException($"Cound not found an author from the provided foreign key {authorId}");
+		await this.EnsureAuthorExists(authorId);
 
 		_ = this.context.Books.Add(new Book {
 			Title = title,
 			PublishedYear = publishedYear,
-			Author = authorEntiry
+			AuthorId = authorId
 		});
 		_ = await this.context.SaveChangesAsync();
 	}
 
 	public async Task UpdateBook(uint id, string title, int publishedYear, uint authorId)
 	{
-		var bookEntity = await this.context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not update a non-existing book with id {id}");
+		await this.EnsureAuthorExists(authorId);
 
-		var authorEntiry = await this.context.Authors.FindAsync(authorId) ?? throw new NotFoundException($"Cound not found an author from the provided foreign key {authorId}");
-
-		bookEntity.Title = title;
-		bookEntity.PublishedYear = publishedYear;
-		bookEntity.Author = authorEntiry;
-
-		_ = this.context.Books.Update(bookEntity);
-		_ = await this.context.SaveChangesAsync();
+		if (await this.context.Books.ExecuteUpdateAsync(
+			setters => setters
+				.SetProperty(book => book.Title, title)
+				.SetProperty(book => book.PublishedYear, publishedYear)
+				.SetProperty(book => book.AuthorId, authorId)
+		) == 0) {
+			throw new NotFoundException($"Could not update a non-existing book with id {id}");
+		}
 	}
 
 	public async Task RemoveBook(uint id)
 	{
-		var bookEntity = await this.context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not remove a non-existing book with id {id}");
-		_ = this.context.Books.Remove(new Book { Id = id });
-		_ = this.context.SaveChangesAsync();
+		if (await this.context.Books.Where(book => book.Id == id).ExecuteDeleteAsync() == 0) {
+			throw new NotFoundException($"Could not remove a non-existing book with id {id}");
+		}
+	}
+
+	private async Task EnsureAuthorExists(uint authorId)
+	{
+		if (!await this.context.Authors.Where(author => author.Id == authorId).AnyAsync()) {
+			throw new NotFoundException($"Cound not found an author by the provided foreign key {authorId}");
+		}
 	}
 }

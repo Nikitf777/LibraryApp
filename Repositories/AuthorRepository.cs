@@ -38,18 +38,19 @@ public class AuthorRepository(LibraryContext context) : IAuthorRepository
 
 	public async Task UpdateAuthor(uint id, string name, DateTime dateOfBirth)
 	{
-		var authorEntity = await this.context.Authors.FindAsync(id) ?? throw new NotFoundException($"Could not modify a non-existing author with id {id}");
-
-		authorEntity.Name = name;
-		authorEntity.DateOfBirth = dateOfBirth;
-		_ = this.context.Authors.Update(authorEntity);
-		_ = await this.context.SaveChangesAsync();
+		if (await this.context.Authors.Where(author => author.Id == id).ExecuteUpdateAsync(
+			setters => setters
+				.SetProperty(author => author.Name, name)
+				.SetProperty(author => author.DateOfBirth, dateOfBirth)) == 0
+		) {
+			throw new NotFoundException($"Could not modify a non-existing author with id {id}");
+		}
 	}
 
 	public async Task RemoveAuthor(uint id)
 	{
-		_ = await this.context.Authors.FindAsync(id) ?? throw new NotFoundException($"Could not remove a non-existing author with id {id}");
-		var entity = this.context.Authors.Remove(new Author { Id = id });
-		_ = await this.context.SaveChangesAsync();
+		if (await this.context.Authors.Where(author => author.Id == id).ExecuteDeleteAsync() == 0) {
+			throw new NotFoundException($"Could not delete a non-existing author with id {id}");
+		}
 	}
 }

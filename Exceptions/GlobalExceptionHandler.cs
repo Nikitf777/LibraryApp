@@ -13,6 +13,7 @@ public class GlobalExceptionHandler()
 	{
 		httpContext.Response.StatusCode = exception switch {
 			NotFoundException => StatusCodes.Status404NotFound,
+			DependentRecordsException => StatusCodes.Status409Conflict,
 			_ => StatusCodes.Status500InternalServerError,
 		};
 
