@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LibraryApp.Exceptions;
 
@@ -13,7 +12,7 @@ public class GlobalExceptionHandler()
 		CancellationToken cancellationToken)
 	{
 		httpContext.Response.StatusCode = exception switch {
-			DbUpdateException => StatusCodes.Status400BadRequest,
+			NotFoundException => StatusCodes.Status404NotFound,
 			_ => StatusCodes.Status500InternalServerError,
 		};
 

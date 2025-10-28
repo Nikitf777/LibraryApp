@@ -1,4 +1,5 @@
 using LibraryApp.DbContext;
+using LibraryApp.Exceptions;
 using LibraryApp.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,52 +23,45 @@ public class BookRepository : IBookRepository
 			}).ToListAsync();
 	}
 
-	public async Task<Book?> FetchSpecificBook(uint id)
+	public async Task<Book> FetchSpecificBook(uint id)
 	{
 		using var context = new LibraryContext();
-		return context.Books.Find(id);
+		return await context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not fetch a non-existing book with id {id}");
 	}
 
 	public async Task InsertBook(string title, int publishedYear, uint authorId)
 	{
 		using var context = new LibraryContext();
-		var authorEntiry = context.Authors.Find(authorId);
-		if (authorEntiry is null) {
-			return;
-		}
+		var authorEntiry = await context.Authors.FindAsync(authorId) ?? throw new NotFoundException($"Cound not found an author from the provided foreign key {authorId}");
+
 		_ = context.Books.Add(new Book {
 			Title = title,
 			PublishedYear = publishedYear,
 			Author = authorEntiry
 		});
-		_ = context.SaveChanges();
+		_ = await context.SaveChangesAsync();
 	}
 
 	public async Task UpdateBook(uint id, string title, int publishedYear, uint authorId)
 	{
 		using var context = new LibraryContext();
-		var bookEntity = context.Books.Find(id);
-		if (bookEntity is null) {
-			return;
-		}
+		var bookEntity = await context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not update a non-existing book with id {id}");
 
-		var authorEntiry = context.Authors.Find(authorId);
-		if (authorEntiry is null) {
-			return;
-		}
+		var authorEntiry = await context.Authors.FindAsync(authorId) ?? throw new NotFoundException($"Cound not found an author from the provided foreign key {authorId}");
 
 		bookEntity.Title = title;
 		bookEntity.PublishedYear = publishedYear;
 		bookEntity.Author = authorEntiry;
 
 		_ = context.Books.Update(bookEntity);
-		_ = context.SaveChanges();
+		_ = await context.SaveChangesAsync();
 	}
 
 	public async Task RemoveBook(uint id)
 	{
 		using var context = new LibraryContext();
+		var bookEntity = await context.Books.FindAsync(id) ?? throw new NotFoundException($"Could not remove a non-existing book with id {id}");
 		_ = context.Books.Remove(new Book { Id = id });
-		_ = context.SaveChanges();
+		_ = context.SaveChangesAsync();
 	}
 }

@@ -14,7 +14,7 @@ public class BookService(IBookRepository bookRepository) : IBookService
 
 	public async Task<Book> RetriveSpecificBookDetails(uint id)
 	{
-		return await this.bookRepository.FetchSpecificBook(id) ?? throw new NotFoundException($"A book with id {id} was not found");
+		return await this.bookRepository.FetchSpecificBook(id);
 	}
 
 	public async Task CreateBook(string title, int publishedYear, uint authorId)

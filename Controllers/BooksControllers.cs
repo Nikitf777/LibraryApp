@@ -32,7 +32,7 @@ public class BooksController(IBookService bookService) : ControllerBase
 	public async Task<string?> Put(uint id, string title, int publishedYear, uint authorId)
 	{
 		await this.bookService.ModifyBook(id, title, publishedYear, authorId);
-		return "Updated the author\n";
+		return "Updated the book\n";
 	}
 
 	[HttpDelete("{id}")]
