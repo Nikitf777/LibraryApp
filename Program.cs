@@ -47,10 +47,15 @@ internal class RootCliCommand
 		{
 			using var context = new LibraryContext(this.Clean);
 			ReadOnlySpan<Type> classes = [typeof(Author), typeof(Book)];
-			foreach (var item in classes) {
-				_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
+			try {
+				foreach (var item in classes) {
+					_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
+				}
+				_ = context.SaveChanges();
+				Console.WriteLine("Filled seed data successfully.");
+			} catch (Exception e) {
+				Console.WriteLine($"[ Error ]\t{e.Message}");
 			}
-			_ = context.SaveChanges();
 		}
 	}
 }
