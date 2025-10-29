@@ -6,9 +6,9 @@ namespace LibraryApp.Services;
 public class BookService(IBookRepository bookRepository) : IBookService
 {
 	private readonly IBookRepository bookRepository = bookRepository;
-	public async Task<IEnumerable<BookListDto>> SearchForBooks(int fromYear = int.MinValue, int toYear = int.MaxValue)
+	public async Task<IEnumerable<BookListDto>> SearchForBooks(int yearFrom = int.MinValue, int yearTo = int.MaxValue)
 	{
-		return await this.bookRepository.FetchBooks(fromYear, toYear);
+		return await this.bookRepository.FetchBooks(yearFrom, yearTo);
 	}
 
 	public async Task<BookDetailsDto> RetriveSpecificBookDetails(uint id)

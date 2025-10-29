@@ -8,11 +8,11 @@ namespace LibraryApp.Repositories;
 public class BookRepository(LibraryContext context) : IBookRepository
 {
 	private readonly LibraryContext context = context;
-	public async Task<IEnumerable<BookListDto>> FetchBooks(int fromYear = int.MinValue, int toYear = int.MaxValue)
+	public async Task<IEnumerable<BookListDto>> FetchBooks(int yearFrom = int.MinValue, int yearTo = int.MaxValue)
 	{
 		return await (
 			from book in this.context.Books
-			where book.PublishedYear >= fromYear && book.PublishedYear <= toYear
+			where book.PublishedYear >= yearFrom && book.PublishedYear <= yearTo
 			join author in this.context.Authors
 				on book.Author.Id equals author.Id
 			select new BookListDto {

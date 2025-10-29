@@ -10,9 +10,9 @@ public class BooksController(IBookService bookService) : ControllerBase
 {
 	private readonly IBookService bookService = bookService;
 	[HttpGet]
-	public async Task<IEnumerable<BookListDto>> GetAll(int fromYear = int.MinValue, int toYear = int.MaxValue)
+	public async Task<IEnumerable<BookListDto>> GetAll(int yearFrom = int.MinValue, int yearTo = int.MaxValue)
 	{
-		return await this.bookService.SearchForBooks(fromYear, toYear);
+		return await this.bookService.SearchForBooks(yearFrom, yearTo);
 	}
 
 	[HttpGet("{id}")]
