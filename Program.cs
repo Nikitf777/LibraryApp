@@ -46,9 +46,9 @@ internal class RootCliCommand
 		public void Run()
 		{
 			using var context = new LibraryContext(this.Clean);
-			ReadOnlySpan<Type> classes = [typeof(Author), typeof(Book)];
+			ReadOnlySpan<Type> models = [typeof(Author), typeof(Book)];
 			try {
-				foreach (var item in classes) {
+				foreach (var item in models) {
 					_ = context.Database.ExecuteSqlRaw(File.ReadAllText($"{DatabaseDirectoryName}/{item.Name}sSeed.sql"));
 				}
 				_ = context.SaveChanges();
